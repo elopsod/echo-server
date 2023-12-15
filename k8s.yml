@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+spec:
+  selector:
+    matchLabels:
+      run: echo-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: echo-server
+    spec:
+      containers:
+      - name: echo-server
+        image: elopsod/echo-server:0.1.0
+        ports:
+        - containerPort: 8080
+        - containerPort: 8443
+        - containerPort: 50051
+        - containerPort: 50053
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-server
+  labels:
+    run: echo-server
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: https
+    port: 8443
+    targetPort: 8443
+    protocol: TCP
+  - name: grpc
+    port: 50051
+    targetPort: 50051
+    protocol: TCP
+  - name: grpcs
+    port: 50053
+    targetPort: 50053
+    protocol: TCP
+  selector:
+    run: echo-server
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: http-echo-server
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: http-echo.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-server
+                port:
+                  number: 8080
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: https-echo-server
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: https-echo.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-server
+                port:
+                  number: 8443
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: grpc-echo-server
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: 'off'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      underscores_in_headers on;
+      ignore_invalid_headers off;
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grpc-echo.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-server
+                port:
+                  number: 50051
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: grpcs-echo-server
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPCS"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: 'off'
+    nginx.ingress.kubernetes.io/server-snippet: |
+      underscores_in_headers on;
+      ignore_invalid_headers off;
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grpcs-echo.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-server
+                port:
+                  number: 50053
