@@ -1,0 +1,30 @@
+name: create_tag
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag:
+    runs-on: ubuntu-22.04
+    environment: CI
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump Version
+        shell: bash
+        env:
+          GITHUB_CUSTOM_TOKEN: ${{secrets.GIT_TOKEN}}
+        run: |
+          export GIT_CREDS_FILEPATH="$HOME/.git-credentials"
+          echo "https://elopsod:${GITHUB_CUSTOM_TOKEN}@github.com" > "$GIT_CREDS_FILEPATH"
+          git config --global credential.helper 'store --file='"$GIT_CREDS_FILEPATH"''
+          git config --unset-all http.https://github.com/.extraheader     #https://stackoverflow.com/a/69979203
+          git config --global user.email "ci_user@git.com"
+          git config --global user.name "CI"
+          git fetch --prune --tags
+          export CURRENT_LATEST_TAG=$(git tag | sort --version-sort | tail -n 1)
+          export FUTURE_LATEST_TAG=$(echo $CURRENT_LATEST_TAG | awk 'BEGIN{FS=OFS="."} {$2+=1} 1')
+          git --version
+          git tag -m "CI bump $FUTURE_LATEST_TAG" "$FUTURE_LATEST_TAG" #https://github.com/orgs/community/discussions/27028#discussioncomment-3254360
+          git push origin "$FUTURE_LATEST_TAG"
