@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/caitlinelfring/go-env-default"
+	env "github.com/caitlinelfring/go-env-default"
 	pb "github.com/elopsod/echo-server/echoServer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -25,6 +25,17 @@ func main() {
 	httpsPort := env.GetDefault("HTTPS_PORT", "8443")
 	grpcPort := env.GetDefault("GRPC_PORT", "50051")
 	grpcsPort := env.GetDefault("GRPCS_PORT", "50053")
+
+	certFile := "certs/server.crt"
+	keyFile := "certs/server.key"
+
+	certificate, _ := tls.LoadX509KeyPair(certFile, keyFile)
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+	}
+	tlsCreds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{certificate},
+	})
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -52,14 +63,6 @@ func main() {
 
 		httpsHandler := http.NewServeMux()
 		httpsHandler.HandleFunc("/", HttpPing)
-
-		certFile := "certs/server.crt"
-		keyFile := "certs/server.key"
-
-		certificate, _ := tls.LoadX509KeyPair(certFile, keyFile)
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{certificate},
-		}
 
 		httpsServer := &http.Server{
 			Addr:      fmt.Sprintf(":%s", httpsPort),
@@ -96,15 +99,7 @@ func main() {
 	// GRPCS server setup
 	go func() {
 		defer wg.Done()
-		certFile := "certs/server.crt"
-		keyFile := "certs/server.key"
-		serverCert, _ := tls.LoadX509KeyPair(certFile, keyFile)
-
-		creds := credentials.NewTLS(&tls.Config{
-			Certificates: []tls.Certificate{serverCert},
-		})
-
-		srv := grpc.NewServer(grpc.Creds(creds))
+		srv := grpc.NewServer(grpc.Creds(tlsCreds))
 
 		pb.RegisterEchoServerServer(srv, &server{})
 		reflection.Register(srv)
