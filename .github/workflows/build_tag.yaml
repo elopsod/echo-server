@@ -35,7 +35,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          platforms: linux/amd64 ,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64
           tags: |
             registry.hub.docker.com/${{github.repository}}:${{github.ref_name}}
             registry.hub.docker.com/${{github.repository}}:latest
