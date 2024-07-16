@@ -131,6 +131,11 @@ func HttpPing(w http.ResponseWriter, r *http.Request) {
 	for key, values := range r.Header {
 		headers = append(headers, fmt.Sprintf("%s: %s", key, strings.Join(values, " ")))
 	}
+
+	params := []string{}
+	for key, values := range r.URL.Query() {
+		params = append(params, fmt.Sprintf("%s: %s", key, strings.Join(values, " ")))
+	}
 	// Send headers, path, and body in the response
 	fmt.Fprintln(w, "Host:", host)
 	fmt.Fprintln(w, "Path:", path)
@@ -139,6 +144,7 @@ func HttpPing(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Scheme:", scheme)
 	fmt.Fprintln(w, "Hostname:", hostname)
 	fmt.Fprintln(w, "Headers:\n\t", strings.Join(headers[:], "\n\t "))
+	fmt.Fprintln(w, "Params:\n\t", strings.Join(params[:], "\n\t "))
 	fmt.Fprintln(w, "Body:\n\t", string(body))
 }
 
