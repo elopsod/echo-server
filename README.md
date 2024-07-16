@@ -20,7 +20,7 @@
   "headers": "map[:authority:[127.0.0.1:50053] content-type:[application/grpc] grpc-accept-encoding:[gzip] user-agent:[grpcurl/v1.8.9 grpc-go/1.57.0]]"
   }
   ```
-  * GRPCs request
+* GRPCs request
   ```shell
   grpcurl -d '{"name": "El"}' --insecure 127.0.0.1:50053   EchoServer/GrpcPing
   ```
